@@ -10,7 +10,6 @@ import java.io.FileWriter
 
 class Repository() {
 
-    private var context: Context?= null
     private val sharedPreferencesKey = "LocalPreferences"
     private val ratesFileName = "conversion_rates.json"
     suspend fun getExchangeRatesFromAPI(context: Context): Response<ConversionRates> {

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Currency Converter</string>
+    <string name="loading_text">Getting latest exchange rates</string>
+    <string name="lbl_amount">Amount</string>
+    <string name="lbl_convert_amount">Enter amount to convert</string>
+    <string name="lbl_converted_amounts">Converted Amounts</string>
 </resources>

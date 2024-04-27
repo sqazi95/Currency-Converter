@@ -91,7 +91,8 @@ fun CurrencySelectionBottomSheet(isMultiSelect: Boolean, vm: CurrencyExchangeVie
                             Icon(
                                 Icons.Rounded.CheckCircle,
                                 contentDescription = "",
-                                modifier = Modifier.padding(start = 20.dp)
+                                modifier = Modifier.padding(start = 20.dp),
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     }

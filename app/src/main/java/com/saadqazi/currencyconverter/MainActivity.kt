@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -86,7 +87,7 @@ fun mainScreen() {
                     CircularProgressIndicator(modifier = Modifier
                         .size(60.dp))
                     Spacer(modifier = Modifier.height(20.dp))
-                    Text(text = "Getting latest exchange rates")
+                    Text(text = stringResource(id = R.string.loading_text))
                 }
 
 
@@ -98,7 +99,7 @@ fun mainScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
                 Spacer(modifier = Modifier.height(20.dp))
-                Text(text = "Currency Converter", fontSize = 32.sp)
+                Text(text = stringResource(id = R.string.app_name), fontSize = 32.sp, color = MaterialTheme.colorScheme.tertiary)
                 Spacer(modifier = Modifier.height(30.dp))
                 
                 Row(modifier = Modifier.fillMaxWidth(0.9f),
@@ -120,6 +121,7 @@ fun mainScreen() {
 
                     Icon(Icons.Filled.KeyboardArrowRight,"",
                         modifier = Modifier.size(60.dp),
+                        tint = MaterialTheme.colorScheme.tertiary
                         )
 
 
@@ -164,16 +166,16 @@ fun mainScreen() {
                                 conversionAmount.value = it
                             }
                         },
-                    label = { Text("Amount")},
+                    label = { Text(stringResource(id = R.string.lbl_amount))},
                     modifier = Modifier.fillMaxWidth(0.9f),
-                    placeholder = { Text(text = "Enter amount to convert")},
+                    placeholder = { Text(text = stringResource(id = R.string.lbl_convert_amount))},
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                Text(text = "Converted Amounts", modifier = Modifier.fillMaxWidth(0.9f),
-                    fontSize = 20.sp)
+                Text(text = stringResource(id = R.string.lbl_converted_amounts), modifier = Modifier.fillMaxWidth(0.9f),
+                    fontSize = 20.sp, color = MaterialTheme.colorScheme.tertiary)
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -191,12 +193,13 @@ fun mainScreen() {
                                 modifier = Modifier.padding(end = 20.dp),
                                 fontSize = 20.sp
                             )
-                            Text(text = code, fontSize = 16.sp)
+                            Text(text = code, fontSize = 16.sp, color = MaterialTheme.colorScheme.tertiary)
                             var convertedAmount = "NA"
                             try {
                                 convertedAmount = vm.getConvertedAmount(conversionAmount.value.text.toDouble(),code)
                             } catch (_: Exception){ }
-                            Text(text = convertedAmount, fontWeight = FontWeight.SemiBold ,fontSize = 16.sp, modifier = Modifier.padding(start=30.dp))
+                            Text(text = convertedAmount, fontWeight = FontWeight.SemiBold ,fontSize = 16.sp, modifier = Modifier.padding(start=30.dp),
+                                color = MaterialTheme.colorScheme.tertiary)
 
                         }
                     }
