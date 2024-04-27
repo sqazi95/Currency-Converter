@@ -1,5 +1,6 @@
 package com.saadqazi.currencyconverter.viewModels
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -15,19 +16,20 @@ class CurrencyExchangeViewModel : ViewModel() {
     private val _data = MutableLiveData<ConversionRates?>()
     val data: LiveData<ConversionRates?> = _data
 
-    private val _loading = MutableLiveData<Boolean>()
-    val loading: LiveData<Boolean> = _loading
+    val loading = mutableStateOf(true)
+    var showTargetCurrencyBottomSheet = mutableStateOf(false)
+    var showBaseCurrencyBottomSheet = mutableStateOf(false)
 
     init {
         fetchData()
     }
 
     private fun fetchData() {
-        _loading.value = true // Set loading state to true before fetching data
+        loading.value = true
         viewModelScope.launch {
-            val response = repository.getExchangeRates()
-            _data.value = response.body()
-            _loading.value = false // Set loading state to false after fetching data
+//            val response = repository.getExchangeRates()
+//            _data.value = response.body()
+        loading.value = false
         }
     }
 }
