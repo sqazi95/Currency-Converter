@@ -21,29 +21,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.saadqazi.currencyconverter.helpers.Util
 import com.saadqazi.currencyconverter.ui.theme.CurrencyConverterTheme
 import com.saadqazi.currencyconverter.ui.theme.CurrencySelectionBottomSheet
 import com.saadqazi.currencyconverter.viewModels.CurrencyExchangeViewModel
@@ -63,10 +64,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun mainScreen() {
     val vm = viewModel<CurrencyExchangeViewModel>()
-    val data = vm.data.value
+    vm.fetchData(LocalContext.current)
     val loading = vm.loading.value
     val scrollState = rememberScrollState()
-    val conversionAmount = remember { mutableLongStateOf(0) }
+    val conversionAmount = remember { mutableStateOf(TextFieldValue()) }
+
 
     Box(
         modifier = Modifier
@@ -77,7 +79,19 @@ fun mainScreen() {
     ) {
 
         if (loading) {
-            Text(text = "Loading...")
+            Box(modifier = Modifier.fillMaxSize() ){
+                Column(modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally) {
+
+                    CircularProgressIndicator(modifier = Modifier
+                        .size(60.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(text = "Getting latest exchange rates")
+                }
+
+
+            }
+
         } else {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -144,12 +158,16 @@ fun mainScreen() {
 
                 Spacer(modifier = Modifier.height(20.dp))
                 OutlinedTextField(
-                    value = conversionAmount.value.toString(),
-                    onValueChange = { conversionAmount.longValue = it.toLong() },
+                    value = conversionAmount.value,
+                    onValueChange = {
+                            if (it.toString().isNotEmpty()){
+                                conversionAmount.value = it
+                            }
+                        },
                     label = { Text("Amount")},
                     modifier = Modifier.fillMaxWidth(0.9f),
-                    placeholder = { Text(text = "Enter amount to convert")}
-
+                    placeholder = { Text(text = "Enter amount to convert")},
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -174,8 +192,12 @@ fun mainScreen() {
                                 fontSize = 20.sp
                             )
                             Text(text = code, fontSize = 16.sp)
+                            var convertedAmount = "NA"
+                            try {
+                                convertedAmount = vm.getConvertedAmount(conversionAmount.value.text.toDouble(),code)
+                            } catch (_: Exception){ }
+                            Text(text = convertedAmount, fontWeight = FontWeight.SemiBold ,fontSize = 16.sp, modifier = Modifier.padding(start=30.dp))
 
-                            Text(text = "Converted Amount", fontWeight = FontWeight.SemiBold ,fontSize = 16.sp, modifier = Modifier.padding(start=30.dp))
                         }
                     }
                 }
@@ -183,31 +205,6 @@ fun mainScreen() {
             }
 
         }
-
-//        Column(modifier = Modifier
-//            .align(Alignment.BottomCenter)
-//            .fillMaxWidth(0.9f)) {
-//            Button(modifier = Modifier
-//                .height(40.dp)
-//                .fillMaxWidth()
-//                ,onClick = {
-//                    vm.showBaseCurrencyBottomSheet.value = true
-//                }) {
-//                Text(text = "Select Base Currency")
-//            }
-//            Spacer(modifier = Modifier.height(10.dp))
-//            Button(modifier = Modifier
-//                .height(40.dp)
-//                .fillMaxWidth()
-//                ,onClick = {
-//                    vm.showTargetCurrencyBottomSheet.value = true
-//                }) {
-//                Text(text = "Select Target Currencies")
-//            }
-//            Spacer(modifier = Modifier.height(10.dp))
-//        }
-
-
 
         if (vm.showBaseCurrencyBottomSheet.value){
             CurrencySelectionBottomSheet(isMultiSelect = false,vm)
