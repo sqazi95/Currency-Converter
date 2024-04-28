@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,7 +60,7 @@ fun CurrencySelectionBottomSheet(isMultiSelect: Boolean, vm: CurrencyExchangeVie
 
         Column(modifier = Modifier
             .safeDrawingPadding()
-            .background(color = MaterialTheme.colorScheme.background)) {
+            .background(color = Color.Transparent)) {
 
             LazyColumn(modifier = Modifier.weight(1f)) {
                 itemsIndexed(Util.currencyList) { index, (_,country, flag) ->

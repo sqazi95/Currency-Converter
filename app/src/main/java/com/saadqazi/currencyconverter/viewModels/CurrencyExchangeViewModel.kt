@@ -1,8 +1,13 @@
 package com.saadqazi.currencyconverter.viewModels
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.NetworkInfo
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -33,25 +38,44 @@ class CurrencyExchangeViewModel() : ViewModel() {
     fun fetchData(context: Context) {
         if (!dataFetched){
             loading.value = true
-            viewModelScope.launch {
-                if (repository.enoughTimeSinceLastFetch(context)){
-                    Log.d("FETCH","Fetch response from API")
-                    val response = repository.getExchangeRatesFromAPI(context)
-                    repository.saveConversionRatesToFile(context,response.body())
-                    _data.value = response.body()
-                } else {
-                    Log.d("FETCH","Fetch response from Local file")
-                    var conversionRates: ConversionRates? = repository.getConversionRatesFromFile(context)
-                    if (conversionRates == null){
-                        Log.d("FETCH","Fetch response from API")
-                        conversionRates = repository.getExchangeRatesFromAPI(context).body()
-                        repository.saveConversionRatesToFile(context,conversionRates)
+            if (isInternetAvailable(context)) {
+                viewModelScope.launch {
+                    if (repository.enoughTimeSinceLastFetch(context)) {
+                        Log.d("FETCH", "Fetch response from API")
+                        val response = repository.getExchangeRatesFromAPI(context)
+                        if (response.isSuccessful) {
+                            val conversionRates: ConversionRates? = response.body()
+                            if (conversionRates == null || conversionRates.result.equals(
+                                    "error",
+                                    true
+                                )
+                            ) {
+                                showErrorMessage(context, "Failed to fetch data")
+                            }
+                            repository.saveConversionRatesToFile(context, response.body())
+                            _data.value = response.body()
+                        } else {
+                            showErrorMessage(context, "Failed to fetch data")
+                        }
+                    } else {
+                        Log.d("FETCH", "Fetch response from Local file")
+                        var conversionRates: ConversionRates? =
+                            repository.getConversionRatesFromFile(context)
+                        if (conversionRates == null) {
+                            Log.d("FETCH", "Fetch response from API")
+                            conversionRates = repository.getExchangeRatesFromAPI(context).body()
+                            repository.saveConversionRatesToFile(context, conversionRates)
+                        }
+                        _data.value = conversionRates
                     }
-                    _data.value = conversionRates
                 }
-                loading.value = false
+            } else {
+                showErrorMessage(context, "Internet is not available")
             }
+
+            loading.value = false
             dataFetched = true
+
         }
     }
 
@@ -82,7 +106,6 @@ class CurrencyExchangeViewModel() : ViewModel() {
     }
 
     fun getConvertedAmount(input: Double, currencyCode: String): Double {
-//        return String.format("%.2f", (convertUSDtoOther(convertToUSD(input),currencyCode)))
         return convertUSDtoOther(convertToUSD(input),currencyCode)
     }
 
@@ -100,5 +123,21 @@ class CurrencyExchangeViewModel() : ViewModel() {
             return amount / exchangeRate
         }
         return 0.0
+    }
+
+    private fun showErrorMessage(context: Context, message: String){
+        Toast.makeText(context,message,Toast.LENGTH_SHORT).show()
+    }
+
+    private fun isInternetAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            return capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        } else {
+            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected
+        }
     }
 }
