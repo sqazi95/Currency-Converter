@@ -1,6 +1,7 @@
 package com.saadqazi.currencyconverter
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -24,19 +25,30 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,25 +58,48 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.saadqazi.currencyconverter.helpers.Util
 import com.saadqazi.currencyconverter.ui.theme.CurrencyConverterTheme
 import com.saadqazi.currencyconverter.ui.theme.CurrencySelectionBottomSheet
 import com.saadqazi.currencyconverter.viewModels.CurrencyExchangeViewModel
+
+
+@Composable
+fun ComposeNavigation(viewModel: CurrencyExchangeViewModel) {
+
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "converter"){
+        composable("converter"){
+            converterScreen(navController,viewModel)
+        }
+        composable("exchange"){
+            exchangeScreen(navController,viewModel)
+        }
+    }
+
+}
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val vm = viewModel<CurrencyExchangeViewModel>()
             CurrencyConverterTheme() {
-                mainScreen()
+                ComposeNavigation(vm)
             }
         }
     }
 }
 
 @Composable
-fun mainScreen() {
-    val vm = viewModel<CurrencyExchangeViewModel>()
+fun converterScreen(navHostController: NavHostController, vm: CurrencyExchangeViewModel) {
+
     vm.fetchData(LocalContext.current)
     val loading = vm.loading.value
     val scrollState = rememberScrollState()
@@ -87,7 +122,7 @@ fun mainScreen() {
                     CircularProgressIndicator(modifier = Modifier
                         .size(60.dp))
                     Spacer(modifier = Modifier.height(20.dp))
-                    Text(text = stringResource(id = R.string.loading_text))
+                    Text(text = stringResource(id = R.string.loading_text), color = MaterialTheme.colorScheme.tertiary)
                 }
 
 
@@ -159,6 +194,14 @@ fun mainScreen() {
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
+                Text("View Exchange Rates", modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .clickable {
+                        navHostController.navigate("exchange")
+                    },
+                    color = MaterialTheme.colorScheme.primary)
+
+                Spacer(modifier = Modifier.height(20.dp))
                 OutlinedTextField(
                     value = conversionAmount.value,
                     onValueChange = {
@@ -196,7 +239,7 @@ fun mainScreen() {
                             Text(text = code, fontSize = 16.sp, color = MaterialTheme.colorScheme.tertiary)
                             var convertedAmount = "NA"
                             try {
-                                convertedAmount = vm.getConvertedAmount(conversionAmount.value.text.toDouble(),code)
+                                convertedAmount = String.format("%.2f", vm.getConvertedAmount(conversionAmount.value.text.toDouble(),code))
                             } catch (_: Exception){ }
                             Text(text = convertedAmount, fontWeight = FontWeight.SemiBold ,fontSize = 16.sp, modifier = Modifier.padding(start=30.dp),
                                 color = MaterialTheme.colorScheme.tertiary)
@@ -219,8 +262,81 @@ fun mainScreen() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun exchangeScreen(navHostController: NavHostController, vm: CurrencyExchangeViewModel) {
+    Scaffold(
+        topBar = { TopAppBar(
+            title = {
+                Row (
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Text("Current Exchange Rates")
+                }
+            },
+            navigationIcon = {
+                IconButton({navHostController.navigateUp()}) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "menu items"
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors( containerColor = MaterialTheme.colorScheme.primary,
+                titleContentColor = Color.White, navigationIconContentColor = Color.White),
+        ) },
+        content = { padding ->
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .background(color = MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(text = "Base Currency:  ${vm.getBaseCurrency().third} ${vm.getBaseCurrency().second} (${vm.getBaseCurrency().first})"
+                    , fontWeight = FontWeight.SemiBold ,fontSize = 18.sp,
+                    modifier = Modifier.fillMaxWidth(0.9f),
+                    color = MaterialTheme.colorScheme.tertiary,)
+                Spacer(modifier = Modifier.height(20.dp))
+                LazyColumn() {
+                    items(Util.currencyList) { (code,_, flag) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp, horizontal = 20.dp)
+                                .clickable {},
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = flag,
+                                modifier = Modifier.padding(end = 20.dp),
+                                fontSize = 20.sp
+                            )
+                            Text(text = code, fontSize = 16.sp, color = MaterialTheme.colorScheme.tertiary)
+                            var convertedAmount = "NA"
+                            try {
+                                convertedAmount = String.format("%.6f", vm.getConvertedAmount(1.0,code))
+                            } catch (_: Exception){ }
+                            Text(text = convertedAmount, fontWeight = FontWeight.SemiBold ,fontSize = 16.sp, modifier = Modifier.padding(start=30.dp),
+                                color = MaterialTheme.colorScheme.tertiary)
+
+                        }
+                    }
+                }
+
+            }
+        }
+    )
+}
+
 @Composable
 @Preview
 fun mainScreenPreview(){
-    mainScreen()
+    val navController = rememberNavController()
+    val vm = viewModel<CurrencyExchangeViewModel>()
+//    vm.fetchData(LocalContext.current)
+    exchangeScreen(navController, vm)
 }

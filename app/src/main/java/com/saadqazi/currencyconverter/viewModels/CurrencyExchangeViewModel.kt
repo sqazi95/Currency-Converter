@@ -81,8 +81,9 @@ class CurrencyExchangeViewModel() : ViewModel() {
         return Util.currencyList[index]
     }
 
-    fun getConvertedAmount(input: Double, currencyCode: String): String {
-        return String.format("%.2f", (convertUSDtoOther(convertToUSD(input),currencyCode)))
+    fun getConvertedAmount(input: Double, currencyCode: String): Double {
+//        return String.format("%.2f", (convertUSDtoOther(convertToUSD(input),currencyCode)))
+        return convertUSDtoOther(convertToUSD(input),currencyCode)
     }
 
     private fun convertUSDtoOther(amount: Double, targetCurrency: String): Double{
